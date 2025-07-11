@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,6 +32,29 @@ public class SecurityConfig {
     //AuthenticationManager 가 인자로 받을 AuthenticationConfiguraion 객체 생성자
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
+
+    private static void customize(CorsConfigurer<HttpSecurity> corsCustomizer) {
+        corsCustomizer.configurationSource(new CorsConfigurationSource() {
+            @Override
+            public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                CorsConfiguration configuration = new CorsConfiguration();
+                //configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+                //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
+                configuration.setAllowedOrigins(Arrays.asList("http://54.180.29.243", "http://54.180.29.243:80"));
+                configuration.setAllowedOrigins(Arrays.asList("http://jeonghwa.kro.kr/", "http://jeonghwa.kro.kr/"));
+                //     configuration.setAllowedOrigins(Arrays.asList("http://grace24.o-r.kr", "https://grace24.o-r.kr"));
+                configuration.setAllowedMethods(Collections.singletonList("*"));
+                configuration.setAllowCredentials(true);
+
+                configuration.setAllowedHeaders(Collections.singletonList("*"));
+                configuration.setMaxAge(3600L);
+
+                configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+                return configuration;
+            }
+        });
+    }
+
     //AuthenticationManager Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
@@ -48,26 +72,7 @@ public class SecurityConfig {
         log.info("SecurityFilterChain filterChain(HttpSecurity http) call.....");
        /////////////////////////////////
         //CORS 설정
-        http.cors((corsCustomizer ->
-                corsCustomizer.configurationSource(new CorsConfigurationSource()
-                {
-                    @Override
-                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                        CorsConfiguration configuration = new CorsConfiguration();
-                        //configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
-                        //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:4173"));
-                        configuration.setAllowedOrigins(Arrays.asList("http://54.180.29.243", "http://54.180.29.243:80"));
-                   //     configuration.setAllowedOrigins(Arrays.asList("http://grace24.o-r.kr", "https://grace24.o-r.kr"));
-                        configuration.setAllowedMethods(Collections.singletonList("*"));
-                        configuration.setAllowCredentials(true);
-
-                        configuration.setAllowedHeaders(Collections.singletonList("*"));
-                        configuration.setMaxAge(3600L);
-
-                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-                        return configuration;
-                    }
-                })));
+        http.cors((SecurityConfig::customize));
         ////////////////////////////////////
         //csrf disable
         http.csrf((auth) -> auth.disable()); //csrf공격을 방어하기 위한 토큰 주고 받는 부분을 비활성화!
